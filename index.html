@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema PinPad</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 500px;
+            width: 100%;
+            padding: 40px 30px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .logo {
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+
+        h1 {
+            color: #333;
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        .status {
+            font-size: 14px;
+            color: #888;
+            padding: 10px;
+            background: #f5f5f5;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .status.conectado {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status.desconectado {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .status.processando {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .status.aprovado {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .info-box {
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            margin-bottom: 25px;
+            border-radius: 8px;
+            font-size: 13px;
+            color: #555;
+        }
+
+        .info-box strong {
+            display: block;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        input[type="text"],
+        input[type="number"],
+        select {
+            width: 100%;
+            padding: 14px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+            font-family: inherit;
+        }
+
+        input[type="text"]:focus,
+        input[type="number"]:focus,
+        select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        input[type="number"] {
+            font-size: 24px;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        .button-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        button {
+            padding: 14px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-conectar {
+            background: #667eea;
+            color: white;
+            grid-column: 1 / -1;
+        }
+
+        .btn-conectar:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-conectar:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-processar {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-processar:hover {
+            background: #218838;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(40, 167, 69, 0.4);
+        }
+
+        .btn-processar:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-cancelar {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-cancelar:hover {
+            background: #c82333;
+            transform: translateY(-2px);
+        }
+
+        .log-box {
+            background: #f5f5f5;
+            border-radius: 8px;
+            padding: 15px;
+            font-size: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            color: #333;
+            margin-bottom: 20px;
+            border: 1px solid #e0e0e0;
+        }
+
+        .log-entry {
+            padding: 5px 0;
+            line-height: 1.4;
+        }
+
+        .log-entry.success {
+            color: #28a745;
+        }
+
+        .log-entry.error {
+            color: #dc3545;
+        }
+
+        .log-entry.info {
+            color: #667eea;
+        }
+
+        .log-entry.warning {
+            color: #ff9800;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal.ativo {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
+            max-width: 400px;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateY(-50px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .modal-icon {
+            font-size: 60px;
+            margin-bottom: 15px;
+        }
+
+        .modal-titulo {
+            font-size: 24px;
+            color: #333;
+            margin-bottom: 15px;
+            font-weight: bold;
+        }
+
+        .modal-valor {
+            font-size: 36px;
+            color: #28a745;
+            font-weight: bold;
+            margin: 20px 0;
+        }
+
+        .modal-mensagem {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .settings-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: #667eea;
+            color: white;
+            border: none;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            font-size: 20px;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .settings-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .settings-modal.ativo {
+            display: flex;
+        }
+
+        .settings-content {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .settings-titulo {
+            font-size: 22px;
+            color: #333;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+
+        .close-settings {
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            color: #aaa;
+            cursor: pointer;
+        }
+
+        .close-settings:hover {
+            color: #000;
+        }
+    </style>
+</head>
+<body>
+    <button class="settings-btn" onclick="abrirConfiguracao()">⚙️</button>
+
+    <div class="container">
+        <div class="header">
+            <div class="logo">💳</div>
+            <h1>Sistema PinPad</h1>
+        </div>
+
+        <div class="status desconectado" id="status">
+            ⚪ Status: Desconectado
+        </div>
+
+        <div class="info-box" id="infoBox">
+            <strong>Rede WiFi:</strong>
+            <span id="wifiInfo">Detectando...</span><br>
+            <strong>PinPad:</strong>
+            <span id="pinpadInfo">Não conectada</span>
+        </div>
+
+        <div class="form-group">
+            <label>IP da PinPad</label>
+            <input type="text" id="ipPinpad" placeholder="Ex: 192.168.1.100" value="192.168.1.100">
+        </div>
+
+        <div class="form-group">
+            <label>Porta PinPad</label>
+            <input type="number" id="portaPinpad" placeholder="5000" value="5000">
+        </div>
+
+        <div class="button-group">
+            <button class="btn-conectar" onclick="conectarPinpad()" id="btnConectar">
+                Conectar PinPad
+            </button>
+        </div>
+
+        <div class="log-box" id="logBox"></div>
+
+        <div class="form-group">
+            <label>Valor da Transação</label>
+            <input type="number" id="valor" placeholder="0.00" step="0.01" min="0" disabled>
+        </div>
+
+        <div class="button-group">
+            <button class="btn-processar" onclick="processarTransacao()" id="btnProcessar" disabled>
+                ✓ OK Aprovar
+            </button>
+            <button class="btn-cancelar" onclick="cancelarTransacao()" id="btnCancelar" disabled>
+                ✗ Cancelar
+            </button>
+        </div>
+    </div>
+
+    <!-- Modal de Processamento -->
+    <div class="modal" id="modalProcessando">
+        <div class="modal-content">
+            <div class="spinner"></div>
+            <div class="modal-titulo">Processando...</div>
+            <div class="modal-mensagem">Aguarde a confirmação da PinPad</div>
+        </div>
+    </div>
+
+    <!-- Modal de Aprovação -->
+    <div class="modal" id="modalAprovado">
+        <div class="modal-content">
+            <div class="modal-icon">✅</div>
+            <div class="modal-titulo">Transação Aprovada!</div>
+            <div class="modal-valor" id="modalValor">R$ 0,00</div>
+            <div class="modal-mensagem">
+                O comprovante será impresso em breve.<br>
+                <strong>Obrigado pela sua compra!</strong>
+            </div>
+            <button class="btn-processar" onclick="fecharModal()" style="grid-column: 1/-1;">OK</button>
+        </div>
+    </div>
+
+    <!-- Modal de Erro -->
+    <div class="modal" id="modalErro">
+        <div class="modal-content">
+            <div class="modal-icon">❌</div>
+            <div class="modal-titulo">Erro na Transação</div>
+            <div class="modal-mensagem" id="modalMensagemErro">Algo deu errado. Tente novamente.</div>
+            <button class="btn-cancelar" onclick="fecharModal()" style="grid-column: 1/-1;">OK</button>
+        </div>
+    </div>
+
+    <!-- Modal de Configurações -->
+    <div class="settings-modal" id="settingsModal">
+        <div class="settings-content">
+            <span class="close-settings" onclick="fecharConfiguracao()">&times;</span>
+            <div class="settings-titulo">Configurações</div>
+
+            <div class="form-group">
+                <label>CNPJ do Estabelecimento</label>
+                <input type="text" id="cnpj" placeholder="00.000.000/0000-00">
+            </div>
+
+            <div class="form-group">
+                <label>Nome do Estabelecimento</label>
+                <input type="text" id="estabelecimento" placeholder="Nome da Loja">
+            </div>
+
+            <div class="form-group">
+                <label>IP do Servidor (este computador)</label>
+                <input type="text" id="ipServidor" placeholder="192.168.1.50" readonly>
+            </div>
+
+            <div class="form-group">
+                <label>Porta do Servidor</label>
+                <input type="number" id="portaServidor" value="5001">
+            </div>
+
+            <div class="form-group">
+                <label>Impressora Padrão</label>
+                <select id="impressora">
+                    <option value="">Selecionar impressora...</option>
+                </select>
+            </div>
+
+            <button class="btn-processar" onclick="salvarConfiguracao()" style="width: 100%; grid-column: 1/-1;">
+                Salvar Configurações
+            </button>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
